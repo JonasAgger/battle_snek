@@ -34,7 +34,10 @@ async fn main() {
     .with_state(state);
 
     // run it
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+
+    let addr = std::env::var("SNEK").unwrap_or(String::from("127.0.0.1:3000"));
+
+    let listener = tokio::net::TcpListener::bind(addr)
         .await
         .unwrap();
     info!("listening on {}", listener.local_addr().unwrap());
