@@ -1,15 +1,23 @@
+use std::fmt::Display;
+
 use serde::Deserialize;
 
-#[derive(Deserialize, PartialEq, Eq, Debug, Copy, Clone)]
+#[derive(Deserialize, PartialEq, Eq, Debug, Copy, Clone, PartialOrd, Ord)]
 pub struct Point {
     pub x: i32,
     pub y: i32,
 }
 
+impl Display for Point {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({},{})", self.x, self.y)
+    }
+}
+
 impl Point {
-  pub fn manhattan_distance(&self, other: &Point) -> usize {
-    (self.x.abs_diff(other.x) + self.y.abs_diff(other.y)) as usize
-  }
+    pub fn manhattan_distance(&self, other: &Point) -> usize {
+        (self.x.abs_diff(other.x) + self.y.abs_diff(other.y)) as usize
+    }
 }
 
 #[derive(Deserialize, PartialEq, Eq, Debug)]

@@ -3,13 +3,20 @@ mod requests;
 #[allow(dead_code)]
 mod responses;
 mod snake;
+mod logic;
 
+use std::{
+    sync::{Arc, Mutex},
+    time::{Duration, Instant},
+};
 
-use std::{sync::{Arc, Mutex}, time::{Duration, Instant}};
-
-use axum::{extract::State, http::StatusCode, routing::{get, post}, Json, Router};
+use axum::{
+    extract::State,
+    http::StatusCode,
+    routing::{get, post},
+    Json, Router,
+};
 use tracing::{info, warn};
-
 
 #[derive(Clone)]
 struct AppState {
@@ -18,32 +25,28 @@ struct AppState {
 
 #[tokio::main]
 async fn main() {
-
     tracing_subscriber::fmt::init();
 
     let state = AppState {
-        hist: Arc::new(Mutex::new(hdrhistogram::Histogram::new(4).unwrap()))
+        hist: Arc::new(Mutex::new(hdrhistogram::Histogram::new(4).unwrap())),
     };
 
     // build our application with a route
     let app = Router::new()
-    .route("/", get(index))
-    .route("/start", post(start))
-    .route("/end", post(end))
-    .route("/move", post(movement))
-    .with_state(state);
+        .route("/", get(index))
+        .route("/start", post(start))
+        .route("/end", post(end))
+        .route("/move", post(movement))
+        .with_state(state);
 
     // run it
 
     let addr = std::env::var("SNEK").unwrap_or(String::from("127.0.0.1:3000"));
 
-    let listener = tokio::net::TcpListener::bind(addr)
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     info!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }
-
 
 async fn index() -> Json<responses::Info> {
     Json(responses::Info {
@@ -72,15 +75,17 @@ async fn end(State(state): State<AppState>, Json(req): Json<requests::Turn>) -> 
     StatusCode::OK
 }
 
-async fn movement(State(state): State<AppState>, Json(req): Json<requests::Turn>) -> Json<responses::Move> {
-    
+async fn movement(
+    State(state): State<AppState>,
+    Json(req): Json<requests::Turn>,
+) -> Json<responses::Move> {
     info!("Calc move!");
     let start = Instant::now();
     // tokio::time::sleep(Duration::from_millis(400)).await;
-    
-    let snake_move = snake::calculate_move(req);
+
+    let snake_move = logic::get_move(req);
     info!("move: {:?}", snake_move.movement);
-    
+
     let elapsed = start.elapsed().as_micros() as u64;
     state.hist.lock().unwrap().record(elapsed).unwrap();
 
@@ -92,7 +97,7 @@ trait Summary {
     fn dur(&self, quantile: f64) -> Duration;
 }
 
-impl Summary for hdrhistogram::Histogram::<u64> {
+impl Summary for hdrhistogram::Histogram<u64> {
     fn summarize(&self) {
         let hist = self;
         info!("# of samples: {}", hist.len());
