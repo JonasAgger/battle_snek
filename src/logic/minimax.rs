@@ -1,21 +1,20 @@
-
-
 use tracing::debug;
 
-use crate::{logic::moves::{get_moves, movement_to_move}, requests::Point};
+use crate::{
+    logic::moves::{get_moves, movement_to_move},
+    requests::Point,
+};
 
 use super::State;
 
-pub fn minimax<const DEPTH: u8, const WIDTH: i32, const HEIGHT: i32>(
-    state: &mut State,
-) -> isize {
+pub fn minimax<const DEPTH: u8, const WIDTH: i32, const HEIGHT: i32>(state: &mut State) -> isize {
     minimax_impl::<DEPTH, WIDTH, HEIGHT>(state, 0, 0)
 }
 
 fn minimax_impl<const DEPTH: u8, const WIDTH: i32, const HEIGHT: i32>(
     mut state: &mut State,
     depth: u8,
-    mut current_score: isize
+    mut current_score: isize,
 ) -> isize {
     let head = state.snake.get_head();
 
@@ -34,12 +33,12 @@ fn minimax_impl<const DEPTH: u8, const WIDTH: i32, const HEIGHT: i32>(
             Some(p) => {
                 state.uneat(Some(p));
                 current_score
-            },
+            }
             None => {
                 let distance_to_food = state.distance_to_food();
                 current_score + distance_to_food
-            },
-        }
+            }
+        };
     }
 
     let possibilities = get_moves::<WIDTH, HEIGHT>(&state);
@@ -62,7 +61,6 @@ fn minimax_impl<const DEPTH: u8, const WIDTH: i32, const HEIGHT: i32>(
         .max()
         .unwrap_or(isize::MIN)
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -222,4 +220,3 @@ mod tests {
         assert_eq!(min_up, 2);
     }
 }
-

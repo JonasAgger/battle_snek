@@ -8,8 +8,11 @@ use std::time::Instant;
 
 use tracing::{debug, error, info};
 
-use crate::{requests::{Point, Turn}, responses::{Move, Movement}, snake::Snake};
-
+use crate::{
+    requests::{Point, Turn},
+    responses::{Move, Movement},
+    snake::Snake,
+};
 
 const WIDTH: i32 = 11;
 const HEIGHT: i32 = 11;
@@ -18,13 +21,17 @@ const DEPTH: u8 = 7;
 pub(crate) struct State {
     pub(crate) snake: Snake,
     pub(crate) food: Vec<Point>,
-    pub(crate) other_snakes: Vec<Snake>
+    pub(crate) other_snakes: Vec<Snake>,
 }
 
 impl State {
     pub fn distance_to_food(&self) -> isize {
         let head = self.snake.get_head();
-        self.food.iter().map(|p| head.manhattan_distance(p) as isize).min().unwrap_or(0)
+        self.food
+            .iter()
+            .map(|p| head.manhattan_distance(p) as isize)
+            .min()
+            .unwrap_or(0)
     }
 
     pub fn uneat(&mut self, food: Option<Point>) {
@@ -66,7 +73,7 @@ pub fn get_move(turn: Turn) -> Move {
             .into_iter()
             .filter(|s| s.id != turn.you.id)
             .map(|s| s.body.into())
-            .collect()
+            .collect(),
     };
     //      x+1  x-1  y+1  y-1
     // x+1  .... .... .... ....
@@ -108,6 +115,3 @@ pub fn get_move(turn: Turn) -> Move {
         }
     }
 }
-
-
-

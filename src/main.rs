@@ -1,9 +1,9 @@
+mod logic;
 #[allow(dead_code)]
 mod requests;
 #[allow(dead_code)]
 mod responses;
 mod snake;
-mod logic;
 
 use std::{
     sync::{Arc, Mutex},
@@ -45,7 +45,10 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     info!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+        .unwrap();
 }
 
 async fn index() -> Json<responses::Info> {
@@ -109,5 +112,29 @@ impl Summary for hdrhistogram::Histogram<u64> {
 
     fn dur(&self, quantile: f64) -> Duration {
         Duration::from_micros(self.value_at_quantile(quantile))
+    }
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
     }
 }

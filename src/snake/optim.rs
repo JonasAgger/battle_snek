@@ -1,9 +1,6 @@
 use std::fmt::Debug;
 
-use crate::
-    requests::Point
-;
-
+use crate::requests::Point;
 
 pub struct Snake {
     is_first: bool,
@@ -63,7 +60,6 @@ impl Snake {
         } else {
             self.body[self.head_index]
         }
-        
     }
 
     pub fn collides_with(&self, p: Point) -> bool {
@@ -91,7 +87,6 @@ impl Snake {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
 
@@ -100,28 +95,32 @@ mod tests {
     #[test]
     fn snake_recursion() {
         let mut snake: Snake = vec![
-            Point {x: 1, y:0},
-            Point {x: 2, y:0},
-            Point {x: 3, y:0},
-        ].into();
+            Point { x: 1, y: 0 },
+            Point { x: 2, y: 0 },
+            Point { x: 3, y: 0 },
+        ]
+        .into();
 
         let h1 = snake.push_head(Point { x: 0, y: 1 });
         let h2 = snake.push_head(Point { x: 0, y: 2 });
         let h3 = snake.push_head(Point { x: 0, y: 3 });
         let h4 = snake.push_head(Point { x: 0, y: 4 });
         let h5 = snake.push_head(Point { x: 0, y: 5 });
-    
+
         snake.pop_head(h5);
         snake.pop_head(h4);
         snake.pop_head(h3);
         snake.pop_head(h2);
         snake.pop_head(h1);
 
-        body_eq(&snake, &vec![
-            Point {x: 1, y:0},
-            Point {x: 2, y:0},
-            Point {x: 3, y:0},
-        ]);
+        body_eq(
+            &snake,
+            &vec![
+                Point { x: 1, y: 0 },
+                Point { x: 2, y: 0 },
+                Point { x: 3, y: 0 },
+            ],
+        );
     }
 
     #[test]
