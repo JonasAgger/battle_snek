@@ -42,7 +42,7 @@ fn minimax_impl<const DEPTH: u8, const WIDTH: i32, const HEIGHT: i32>(
         }
     }
 
-    let possibilities = get_moves::<WIDTH, HEIGHT>(&state.snake);
+    let possibilities = get_moves::<WIDTH, HEIGHT>(&state);
     possibilities
         .iter()
         .enumerate()

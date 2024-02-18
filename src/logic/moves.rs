@@ -1,17 +1,19 @@
 use crate::{requests::Point, responses::Movement, snake::Snake};
 
+use super::State;
 
 
-pub fn can_move<const WIDTH: i32, const HEIGHT: i32>(p: Point, snake: &Snake) -> bool {
-    p.x >= 0 && p.x < WIDTH && p.y >= 0 && p.y < HEIGHT && !snake.collides_with(p)
+
+pub fn can_move<const WIDTH: i32, const HEIGHT: i32>(p: Point, state: &State) -> bool {
+    p.x >= 0 && p.x < WIDTH && p.y >= 0 && p.y < HEIGHT && !state.collides_with(p)
 }
 
-pub fn get_moves<const WIDTH: i32, const HEIGHT: i32>(snake: &Snake) -> [bool; 4] {
+pub fn get_moves<const WIDTH: i32, const HEIGHT: i32>(state: &State) -> [bool; 4] {
     [
-        can_move::<WIDTH, HEIGHT>(movement_to_move(snake.get_head(), Movement::Right), snake),
-        can_move::<WIDTH, HEIGHT>(movement_to_move(snake.get_head(), Movement::Left), snake),
-        can_move::<WIDTH, HEIGHT>(movement_to_move(snake.get_head(), Movement::Up), snake),
-        can_move::<WIDTH, HEIGHT>(movement_to_move(snake.get_head(), Movement::Down), snake),
+        can_move::<WIDTH, HEIGHT>(movement_to_move(state.snake.get_head(), Movement::Right), state),
+        can_move::<WIDTH, HEIGHT>(movement_to_move(state.snake.get_head(), Movement::Left), state),
+        can_move::<WIDTH, HEIGHT>(movement_to_move(state.snake.get_head(), Movement::Up), state),
+        can_move::<WIDTH, HEIGHT>(movement_to_move(state.snake.get_head(), Movement::Down), state),
     ]
 }
 

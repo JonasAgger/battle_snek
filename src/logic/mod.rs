@@ -18,6 +18,7 @@ const DEPTH: u8 = 7;
 pub(crate) struct State {
     pub(crate) snake: Snake,
     pub(crate) food: Vec<Point>,
+    pub(crate) other_snakes: Vec<Snake>
 }
 
 impl State {
@@ -43,6 +44,14 @@ impl State {
 
         None
     }
+
+    pub fn collides_with(&self, p: Point) -> bool {
+        if self.snake.collides_with(p) {
+            return true;
+        }
+
+        self.other_snakes.iter().any(|s| s.collides_with(p))
+    }
 }
 
 pub fn get_move(turn: Turn) -> Move {
@@ -51,6 +60,13 @@ pub fn get_move(turn: Turn) -> Move {
     let mut state = State {
         snake: turn.you.body.into(),
         food: turn.board.food,
+        other_snakes: turn
+            .board
+            .snakes
+            .into_iter()
+            .filter(|s| s.id != turn.you.id)
+            .map(|s| s.body.into())
+            .collect()
     };
     //      x+1  x-1  y+1  y-1
     // x+1  .... .... .... ....
@@ -58,7 +74,7 @@ pub fn get_move(turn: Turn) -> Move {
     // y+1  .yx. .xy. ..x. ..y.
     // y-1  .... .... ..y. ..x.
 
-    let possibilities = get_moves::<WIDTH, HEIGHT>(&state.snake);
+    let possibilities = get_moves::<WIDTH, HEIGHT>(&state);
 
     let mut max_score = isize::MIN;
     let mut max = None;
