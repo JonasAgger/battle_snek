@@ -3,6 +3,7 @@ use tracing::debug;
 use crate::{
     logic::moves::{get_moves, movement_to_move},
     requests::Point,
+    responses::Movement,
 };
 
 use super::State;
@@ -20,7 +21,7 @@ fn minimax_impl<const DEPTH: u8, const WIDTH: i32, const HEIGHT: i32>(
 
     debug!(?state.snake);
 
-    let ate = state.try_eat();
+    let ate = state.try_eat(head);
 
     // Score for eating
     if let Some(_) = ate {
@@ -41,7 +42,7 @@ fn minimax_impl<const DEPTH: u8, const WIDTH: i32, const HEIGHT: i32>(
         };
     }
 
-    let possibilities = get_moves::<WIDTH, HEIGHT>(&state);
+    let possibilities = get_moves::<WIDTH, HEIGHT>(&state.snake, &state);
     possibilities
         .iter()
         .enumerate()
@@ -60,6 +61,147 @@ fn minimax_impl<const DEPTH: u8, const WIDTH: i32, const HEIGHT: i32>(
         })
         .max()
         .unwrap_or(isize::MIN)
+}
+
+enum Minimax {
+    Minimize,
+    Maximize,
+}
+
+fn minimax_impl2<const DEPTH: u8, const WIDTH: i32, const HEIGHT: i32>(
+    mut state: &mut State,
+    depth: u8,
+    mut current_score: isize,
+    minimax: Minimax,
+) -> isize {
+    let head = state.snake.get_head();
+
+    debug!(?state.snake);
+
+    let ate = state.try_eat(state.snake.get_head());
+    let other_ate: Vec<_> = state.other_snakes.iter().map(|s| s.get_head()).collect();
+
+    let other_ate: Vec<_> = other_ate
+        .into_iter()
+        .filter_map(|p| state.try_eat(p))
+        .collect();
+
+    // Score for you eating
+    if let Some(_) = ate {
+        current_score += 100;
+    }
+
+    // Exit condition
+    if depth == DEPTH {
+        return match ate {
+            Some(p) => {
+                state.uneat(Some(p));
+                current_score
+            }
+            None => {
+                let distance_to_food = state.distance_to_food();
+                current_score + distance_to_food
+            }
+        };
+    }
+
+    match minimax {
+        Minimax::Minimize => {
+            let mut value = isize::MAX;
+            let mut old_snakes = Vec::with_capacity(state.other_snakes.len());
+
+            let move_sets: Vec<Vec<_>> = state
+                .other_snakes
+                .iter()
+                .map(|s| {
+                    get_moves::<WIDTH, HEIGHT>(s, &state)
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, p)| **p)
+                        .map(|(i, _)| i.into())
+                        .collect()
+                })
+                .collect();
+
+            let moves = permutations(&move_sets);
+
+            for move_set in moves {
+                for s in 0..state.other_snakes.len() {
+                    let movement = move_set[s];
+                    let new_head = movement_to_move(state.other_snakes[s].get_head(), movement);
+                    let old_head = state.other_snakes[s].push_head(new_head);
+                    old_snakes.push(old_head);
+                }
+
+                let score = minimax_impl2::<DEPTH, WIDTH, HEIGHT>(
+                    &mut state,
+                    depth + 1,
+                    current_score,
+                    Minimax::Maximize,
+                );
+
+                value = value.min(score);
+            }
+
+            state.uneat(ate);
+            other_ate.iter().for_each(|&f| state.uneat(Some(f)));
+            for (i, h) in old_snakes.into_iter().enumerate() {
+                state.other_snakes[i].pop_head(h);
+            }
+
+            return value;
+        }
+        Minimax::Maximize => {
+            let possibilities = get_moves::<WIDTH, HEIGHT>(&state.snake, &state);
+            possibilities
+                .iter()
+                .enumerate()
+                .filter(|(_, p)| **p)
+                .map(|(i, _)| i.into())
+                .map(|movement| {
+                    let new_head = movement_to_move(head, movement);
+                    let old_head = state.snake.push_head(new_head);
+
+                    let score = minimax_impl2::<DEPTH, WIDTH, HEIGHT>(
+                        &mut state,
+                        depth + 1,
+                        current_score,
+                        Minimax::Minimize,
+                    );
+
+                    state.uneat(ate);
+                    other_ate.iter().for_each(|&f| state.uneat(Some(f)));
+                    state.snake.pop_head(old_head);
+
+                    score
+                })
+                .max()
+                .unwrap_or(isize::MIN)
+        }
+    }
+}
+
+fn permutations<T: Clone>(input: &[Vec<T>]) -> Vec<Vec<T>> {
+    fn generate_permutations<T: Clone>(input: &[Vec<T>], index: usize) -> Vec<Vec<T>> {
+        if index >= input.len() {
+            return vec![vec![]];
+        }
+
+        let mut permutations = Vec::new();
+        let next_permutations = generate_permutations(input, index + 1);
+
+        for item in &input[index] {
+            for permutation in &next_permutations {
+                let mut new_permutation = vec![item.clone()];
+                new_permutation.extend_from_slice(permutation);
+                permutations.push(new_permutation);
+            }
+        }
+
+        permutations
+    }
+
+    generate_permutations(input, 0)
 }
 
 #[cfg(test)]

@@ -40,9 +40,7 @@ impl State {
         }
     }
 
-    pub fn try_eat(&mut self) -> Option<Point> {
-        let head = self.snake.get_head();
-
+    pub fn try_eat(&mut self, head: Point) -> Option<Point> {
         for i in 0..self.food.len() {
             if self.food[i] == head {
                 return Some(self.food.remove(i));
@@ -81,7 +79,7 @@ pub fn get_move(turn: Turn) -> Move {
     // y+1  .yx. .xy. ..x. ..y.
     // y-1  .... .... ..y. ..x.
 
-    let possibilities = get_moves::<WIDTH, HEIGHT>(&state);
+    let possibilities = get_moves::<WIDTH, HEIGHT>(&state.snake, &state);
 
     let mut max_score = isize::MIN;
     let mut max = None;
