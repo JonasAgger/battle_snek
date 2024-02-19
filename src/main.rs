@@ -58,7 +58,7 @@ async fn index() -> Json<responses::Info> {
         color: Some("#b7410e".to_string()),
         head: None,
         tail: None,
-        version: Some("0".to_string()),
+        version: Some("1".to_string()),
     })
 }
 
