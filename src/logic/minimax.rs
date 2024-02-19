@@ -1,15 +1,11 @@
 use tracing::debug;
 
-use crate::{
-    logic::moves::{get_moves, movement_to_move},
-    requests::Point,
-    responses::Movement,
-};
+use crate::logic::moves::{get_moves, movement_to_move};
 
 use super::State;
 
 pub fn minimax<const DEPTH: u8, const WIDTH: i32, const HEIGHT: i32>(state: &mut State) -> isize {
-    minimax_impl::<DEPTH, WIDTH, HEIGHT>(state, 0, 0)
+    minimax_impl2::<DEPTH, WIDTH, HEIGHT>(state, 0, 0, Minimax::Maximize)
 }
 
 fn minimax_impl<const DEPTH: u8, const WIDTH: i32, const HEIGHT: i32>(
@@ -141,13 +137,15 @@ fn minimax_impl2<const DEPTH: u8, const WIDTH: i32, const HEIGHT: i32>(
                 );
 
                 value = value.min(score);
+
+                for (i, &h) in old_snakes.iter().enumerate() {
+                    state.other_snakes[i].pop_head(h);
+                }
+                old_snakes.clear();
             }
 
             state.uneat(ate);
             other_ate.iter().for_each(|&f| state.uneat(Some(f)));
-            for (i, h) in old_snakes.into_iter().enumerate() {
-                state.other_snakes[i].pop_head(h);
-            }
 
             return value;
         }
