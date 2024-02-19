@@ -87,8 +87,12 @@ fn minimax_impl2<const DEPTH: u8, const WIDTH: i32, const HEIGHT: i32>(
         current_score += 100;
     }
 
+    current_score -= (other_ate.len() * 10) as isize;
+
     // Exit condition
     if depth == DEPTH {
+        other_ate.iter().for_each(|&f| state.uneat(Some(f)));
+
         return match ate {
             Some(p) => {
                 state.uneat(Some(p));
